@@ -25,6 +25,7 @@ ByteArray;
 
 struc_t
 {
+   char mnemonic[5];
    u8 contents[4];
    TokenType profile[PROFILE_MAX];
    u8 length;

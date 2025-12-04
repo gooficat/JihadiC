@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +30,8 @@ Instruction ParseExpression(String ptr in)
    {
       if (isalpha(in[i].data[0]))
       {
-         for (int j = 0; j < num_registers; j++)
+         int j;
+         for (j = 0; j < num_registers; j++)
          {
             if (!strcmp(in[i].data, registers[j].name))
             {
@@ -39,11 +41,20 @@ Instruction ParseExpression(String ptr in)
                break;
             }
          }
+         if (j == num_registers)
+         {
+            out.profile[out.length] = TK_INS;
+
+            // i need a way to outsource the finding of the opcode in a way that allows me to still
+            // have labels with alphanumeric names
+
+            out.length++;
+         }
       }
       else
       {
          out.profile[out.length] = TK_IMM;
-         sscanf_s(in[i].data, "%hhu", out.contents[out.length]);
+         sscanf_s(in[i].data, "%hhu", &out.contents[out.length]);
          out.length++;
       }
    }
@@ -53,13 +64,26 @@ Instruction ParseExpression(String ptr in)
 
 int main(void)
 {
-   String expression[] = {MakeString("ax"), MakeString("234")};
+   String expression[] = {MakeString("ret")};
 
    Instruction instruction = ParseExpression(expression);
 
-   for (int i = 0; i < instruction.length; i++)
+   for (int i = 0; i < num_instruction; i++)
    {
-      printf_s("0x%hhX\n", instruction.contents[i]);
+      bool found = true;
+      for (int j = 0; j < PROFILE_MAX; j++)
+      {
+         if ((!instructions[i].profile[j] && j < instruction.length - 1) ||
+             instruction.profile[j] != instructions[i].profile[j])
+         {
+            found = false;
+            break;
+         }
+      }
+      if (!found)
+         continue;
+
+      printf_s("Instruction matches with profile!\n");
    }
 
    return 0;

@@ -20,9 +20,10 @@ cmake_minimum_required(VERSION 3.15)
     
     # Compiler-specific options
     if(MSVC)
-        target_compile_options(jihadi-c PRIVATE /W4)
+        target_compile_options(jihadi-c PRIVATE /W4 /fsanitize=address)
     else()
-        target_compile_options(jihadi-c PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(jihadi-c PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
+        target_link_options(jihadi-c PRIVATE -fsanitize=address)
     endif()
     
     # Debug configuration
