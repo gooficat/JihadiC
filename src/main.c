@@ -5,6 +5,26 @@
 #include <string.h>
 #include "data.h"
 #include "specification.h"
+#include "token.h"
+
+struc_t
+{
+   u64 location;
+   u16 label_index;
+   u8 addr_length;
+}
+LabelMarker;
+
+ArrayType(LabelMarker) LabelMarkerArray;
+
+struc_t
+{
+   Instruction ptr data;
+   u64 length;
+   StringArray labels;
+   LabelMarkerArray label_markers;
+}
+AssemblyUnit;
 
 String MakeString(char ptr initializer)
 {
@@ -17,23 +37,23 @@ String MakeString(char ptr initializer)
 void ExtractImmediate(String ptr in, Instruction ptr out)
 {
    out->profile[out->length] = TK_IMM;
-   sscanf_s(in->data, "0x%hhx", &(out->contents[out->length]));
+   sscanf_s(in->data, "0x%hhx", addr(out->contents[out->length]));
    out->length++;
 }
 
-Instruction ParseExpression(String ptr in, u8 length)
+Instruction ParseExpression(StringArray ptr in)
 {
    Instruction out = {};
-   strcpy_s(out.mnemonic, 5, in[0].data);
+   strcpy_s(out.mnemonic, 5, in->data[0].data);
 
-   for (u64 i = 0; i < length; i++)
+   for (u64 i = 0; i < in->length; i++)
    {
-      if (isalpha(in[i].data[0]))
+      if (isalpha(in->data[i].data[0]))
       {
          int j;
          for (j = 0; j < num_registers; j++)
          {
-            if (!strcmp(in[i].data, registers[j].name))
+            if (!strcmp(in->data[i].data, registers[j].name))
             {
                out.profile[out.length] = TK_REG;
                out.contents[out.length] = registers[j].opcode;
@@ -50,7 +70,7 @@ Instruction ParseExpression(String ptr in, u8 length)
             out.profile[out.length] = TK_INS;
             for (int k = 0; k < num_instruction; k++)
             {
-               if (!strcmp(in[i].data, instructions[k].name))
+               if (!strcmp(in->data[i].data, instructions[k].name))
                {
                   out.contents[out.length] = instructions[k].opcode;
                   break;
@@ -61,7 +81,7 @@ Instruction ParseExpression(String ptr in, u8 length)
       }
       else
       {
-         ExtractImmediate(&in[i], &out);
+         ExtractImmediate(addr in->data[i], addr out);
       }
    }
 
@@ -106,15 +126,80 @@ void TranslateInstruction(Instruction ptr instruction, ByteArray ptr output)
    }
 }
 
+#define FetchUntil(requirement, buffer)                                                            \
+   while (requirement)                                                                             \
+   {                                                                                               \
+      ResizeArray(buffer, buffer.length + 1, char);                                                \
+      buffer.data[buffer.length - 1] = (char)character;                                            \
+      character = fgetc(in_file);                                                                  \
+   }
+
+AssemblyUnit AssembleInstructions(FILE ptr in_file)
+{
+   AssemblyUnit output = {.data = malloc(1),
+                          .label_markers = {.data = malloc(1), .length = 0},
+                          .labels = {.data = malloc(1), .length = 0},
+                          .length = 0};
+
+   String buffer = {.data = malloc(1), .length = 0};
+
+   StringArray expression = {.data = malloc(1), .length = 0};
+
+   bool finished = false;
+#define next_token FetchToken(in_file, &buffer)
+   if (!next_token)
+   {
+      finished = true;
+   }
+   while (!finished)
+   {
+      printf_s("|%s|\n", buffer.data);
+
+      ResizeArray(expression, 1, String);
+      expression.data[0] = buffer;
+      buffer = (String){.data = malloc(1), .length = 0};
+
+      while (next_token)
+      {
+         ResizeArray(expression, expression.length + 1, String);
+         expression.data[expression.length - 1] = buffer;
+         for (u64 p = 0; p < expression.length; p++)
+         {
+            printf_s("expression contains %s\n", expression.data[p].data);
+         }
+         buffer = MakeString(calloc(1, 1));
+
+         if (!next_token)
+            finished = true;
+
+         if (buffer.data[0] != ',')
+            break;
+      }
+      ResizeArray(output, output.length + 1, Instruction);
+      output.data[output.length - 1] = ParseExpression(addr expression);
+      printf_s("Reached end of an instruction\n");
+   }
+   free(buffer.data);
+
+   return output;
+}
+
 int main(void)
 {
-   String expression[] = {MakeString("byt"), MakeString("0x54")};
 
-   Instruction instruction = ParseExpression(expression, sizeof(expression) / sizeof(String));
+   FILE ptr in_file;
+   fopen_s(addr in_file, "../jc/jc-asm/test.as", "rt");
+
+   // Instruction instruction = ParseExpression(expression, sizeof(expression) / sizeof(String));
+
+   AssemblyUnit assembly_instructions = AssembleInstructions(in_file);
 
    ByteArray output = {.data = malloc(1), .length = 0};
 
-   TranslateInstruction(addr instruction, addr output);
+   for (u64 i = 0; i < assembly_instructions.length; i++)
+   {
+      TranslateInstruction(addr assembly_instructions.data[i], addr output);
+   }
 
    for (u64 i = 0; i < output.length; i++)
    {

@@ -1,7 +1,7 @@
 #pragma once
 #include "defs.h"
 
-enu_m{TK_EMP, TK_INS, TK_IMM, TK_REG, TK_MOD_R_RM} TokenType;
+enu_m{TK_EMP, TK_INS, TK_IMM, TK_REG, TK_LAB} TokenType;
 
 #define PROFILE_MAX 4
 
@@ -14,7 +14,8 @@ struct GenericArray
 void ResizeArrayFunc(struct GenericArray ptr array, u64 new_size);
 
 #define ResizeArray(array, new_size, element_type)                                                 \
-   ResizeArrayFunc((struct GenericArray ptr)(addr array), new_size * sizeof(element_type))
+   (array).length = new_size;                                                                      \
+   ResizeArrayFunc((struct GenericArray ptr)(addr array), (new_size) * sizeof(element_type))
 
 #define ArrayType(type)                                                                            \
    struc_t                                                                                         \

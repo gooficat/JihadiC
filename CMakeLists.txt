@@ -16,11 +16,13 @@ cmake_minimum_required(VERSION 3.15)
         src/main.c
         src/data.c
         src/specification.c
+        src/token.c
     )
     
     # Compiler-specific options
     if(MSVC)
-        target_compile_options(jihadi-c PRIVATE /W4 /fsanitize=address)
+        target_compile_options(jihadi-c PRIVATE /W4)
+        #  /fsanitize=address)
     else()
         target_compile_options(jihadi-c PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
         target_link_options(jihadi-c PRIVATE -fsanitize=address)
