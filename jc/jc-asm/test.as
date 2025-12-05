@@ -1,1 +1,2 @@
 mov bh, 0x54
+byt 0x03

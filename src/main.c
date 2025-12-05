@@ -68,14 +68,15 @@ Instruction ParseExpression(StringArray ptr in)
             // have labels with alphanumeric names. This solution here will not work if a mnemonic
             // has multiple ops attached to it.
             out.profile[out.length] = TK_INS;
-            for (int k = 0; k < num_instruction; k++)
+            int k;
+            for (k = 0; k < num_instruction; k++)
             {
                if (!strcmp(in->data[i].data, instructions[k].name))
                {
                   out.contents[out.length] = instructions[k].opcode;
                   break;
                }
-            }
+            }  // perhaps add a flag here that adds a label marker to the unit
             out.length++;
          }
       }
