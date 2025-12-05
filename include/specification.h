@@ -2,8 +2,6 @@
 
 #include "data.h"
 
-void InsOp_Direct(Instruction ptr instruction, ByteArray ptr output);
-
 extern Register registers[];
 extern u8 num_registers;
 

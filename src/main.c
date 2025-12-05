@@ -54,9 +54,14 @@ Instruction ParseExpression(String ptr in, u8 length)
       else
       {
          out.profile[out.length] = TK_IMM;
-         sscanf_s(in[i].data, "%hhu", &out.contents[out.length]);
+         sscanf_s(in[i].data, "0x%hhx", &out.contents[out.length]);
          out.length++;
       }
+   }
+
+   for (int i = 0; i < out.length; i++)
+   {
+      printf_s("Profile at %d is %d\n", i, out.profile[i]);
    }
 
    return out;
@@ -64,15 +69,15 @@ Instruction ParseExpression(String ptr in, u8 length)
 
 int main(void)
 {
-   String expression[] = {MakeString("ret")};
+   String expression[] = {MakeString("byt"), MakeString("0x54")};
 
-   Instruction instruction = ParseExpression(expression, 1);
+   Instruction instruction = ParseExpression(expression, sizeof(expression) / sizeof(String));
 
    ByteArray output = {.data = malloc(1), .length = 0};
 
    for (int i = 0; i < num_instruction; i++)
    {
-      printf_s("What?\n");
+      printf_s("Checking instruction %s for match!\n", instructions[i].name);
       bool found = true;
       for (int j = 0; j < PROFILE_MAX; j++)
       {
@@ -93,8 +98,9 @@ int main(void)
       }
 
       instructions[i].operator(addr instruction, addr output);
-
-      printf_s("Instruction matches with profile! Output length is now %llu\n", output.length);
+      printf_s("Instruction matches with profile for %s! Output length is now %llu\n",
+               instructions[i].name, output.length);
+      break;
    }
 
    for (u64 i = 0; i < output.length; i++)
