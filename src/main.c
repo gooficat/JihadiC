@@ -14,9 +14,17 @@ String MakeString(char ptr initializer)
    return out;
 }
 
+void ExtractImmediate(String ptr in, Instruction ptr out)
+{
+   out->profile[out->length] = TK_IMM;
+   sscanf_s(in->data, "0x%hhx", &(out->contents[out->length]));
+   out->length++;
+}
+
 Instruction ParseExpression(String ptr in, u8 length)
 {
    Instruction out = {};
+   strcpy_s(out.mnemonic, 5, in[0].data);
 
    for (u64 i = 0; i < length; i++)
    {
@@ -53,9 +61,7 @@ Instruction ParseExpression(String ptr in, u8 length)
       }
       else
       {
-         out.profile[out.length] = TK_IMM;
-         sscanf_s(in[i].data, "0x%hhx", &out.contents[out.length]);
-         out.length++;
+         ExtractImmediate(&in[i], &out);
       }
    }
 
@@ -67,22 +73,18 @@ Instruction ParseExpression(String ptr in, u8 length)
    return out;
 }
 
-int main(void)
+void TranslateInstruction(Instruction ptr instruction, ByteArray ptr output)
 {
-   String expression[] = {MakeString("byt"), MakeString("0x54")};
-
-   Instruction instruction = ParseExpression(expression, sizeof(expression) / sizeof(String));
-
-   ByteArray output = {.data = malloc(1), .length = 0};
-
    for (int i = 0; i < num_instruction; i++)
    {
+      if (strcmp(instruction->mnemonic, instructions[i].name))
+         continue;
       printf_s("Checking instruction %s for match!\n", instructions[i].name);
       bool found = true;
       for (int j = 0; j < PROFILE_MAX; j++)
       {
          printf_s("Checking profile.\n");
-         if (instruction.profile[j] != instructions[i].profile[j])
+         if (instruction->profile[j] != instructions[i].profile[j])
          {
             found = false;
             break;
@@ -91,17 +93,28 @@ int main(void)
       if (!found)
       {
          printf_s("No match between %s with first profile %hhu, and instruction of length %hhx "
-                  "with first profile %hhu\n",
-                  instructions[i].name, instructions[i].profile[0], instruction.length,
-                  instruction.profile[0]);
+                  "with first profile %hhu and mnemonic %s\n",
+                  instructions[i].name, instructions[i].profile[0], instruction->length,
+                  instruction->profile[0], instruction->mnemonic);
          continue;
       }
 
-      instructions[i].operator(addr instruction, addr output);
+      instructions[i].operator(instruction, output);
       printf_s("Instruction matches with profile for %s! Output length is now %llu\n",
-               instructions[i].name, output.length);
+               instructions[i].name, output->length);
       break;
    }
+}
+
+int main(void)
+{
+   String expression[] = {MakeString("byt"), MakeString("0x54")};
+
+   Instruction instruction = ParseExpression(expression, sizeof(expression) / sizeof(String));
+
+   ByteArray output = {.data = malloc(1), .length = 0};
+
+   TranslateInstruction(addr instruction, addr output);
 
    for (u64 i = 0; i < output.length; i++)
    {

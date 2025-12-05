@@ -1,7 +1,7 @@
 #pragma once
 #include "defs.h"
 
-enu_m{TK_EMP, TK_INS, TK_IMM, TK_REG} TokenType;
+enu_m{TK_EMP, TK_INS, TK_IMM, TK_REG, TK_MOD_R_RM} TokenType;
 
 #define PROFILE_MAX 4
 

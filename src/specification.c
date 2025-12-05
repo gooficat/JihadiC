@@ -31,5 +31,6 @@ u8 num_registers = sizeof(registers) / sizeof(Register);
 InstructionDescriptor instructions[] = {{"ret", 0xC3, {TK_INS}, InsOp_Direct},
                                         {"mov", 0x0B, {TK_INS, TK_REG, TK_IMM}, InsOp_AddFirst2},
                                         {"jmp", 0xEA, {TK_INS, TK_IMM}, InsOp_AddFirst2},
-                                        {"byt", 0x00, {TK_INS, TK_INS}, InsOp_AddFirst2}};
+                                        {"byt", 0x00, {TK_INS, TK_IMM}, InsOp_AddFirst2},
+                                        {"int", 0xDC, {TK_INS, TK_IMM}, InsOp_Direct}};
 u8 num_instruction = sizeof(instructions) / sizeof(InstructionDescriptor);
