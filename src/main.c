@@ -6,13 +6,6 @@
 #include "data.h"
 #include "specification.h"
 
-struc_t
-{
-   char ptr data;
-   u64 length;
-}
-String;
-
 String MakeString(char ptr initializer)
 {
    String out;
@@ -21,12 +14,11 @@ String MakeString(char ptr initializer)
    return out;
 }
 
-Instruction ParseExpression(String ptr in)
+Instruction ParseExpression(String ptr in, u8 length)
 {
-   Instruction out;
-   out.length = 0;
+   Instruction out = {};
 
-   for (u64 i = 0; i < in->length; i++)
+   for (u64 i = 0; i < length; i++)
    {
       if (isalpha(in[i].data[0]))
       {
@@ -43,11 +35,19 @@ Instruction ParseExpression(String ptr in)
          }
          if (j == num_registers)
          {
+
+            // I need a way to outsource the finding of the opcode in a way that allows me to still
+            // have labels with alphanumeric names. This solution here will not work if a mnemonic
+            // has multiple ops attached to it.
             out.profile[out.length] = TK_INS;
-
-            // i need a way to outsource the finding of the opcode in a way that allows me to still
-            // have labels with alphanumeric names
-
+            for (int k = 0; k < num_instruction; k++)
+            {
+               if (!strcmp(in[i].data, instructions[k].name))
+               {
+                  out.contents[out.length] = instructions[k].opcode;
+                  break;
+               }
+            }
             out.length++;
          }
       }
@@ -66,24 +66,40 @@ int main(void)
 {
    String expression[] = {MakeString("ret")};
 
-   Instruction instruction = ParseExpression(expression);
+   Instruction instruction = ParseExpression(expression, 1);
+
+   ByteArray output = {.data = malloc(1), .length = 0};
 
    for (int i = 0; i < num_instruction; i++)
    {
+      printf_s("What?\n");
       bool found = true;
       for (int j = 0; j < PROFILE_MAX; j++)
       {
-         if ((!instructions[i].profile[j] && j < instruction.length - 1) ||
-             instruction.profile[j] != instructions[i].profile[j])
+         printf_s("Checking profile.\n");
+         if (instruction.profile[j] != instructions[i].profile[j])
          {
             found = false;
             break;
          }
       }
       if (!found)
+      {
+         printf_s("No match between %s with first profile %hhu, and instruction of length %hhx "
+                  "with first profile %hhu\n",
+                  instructions[i].name, instructions[i].profile[0], instruction.length,
+                  instruction.profile[0]);
          continue;
+      }
 
-      printf_s("Instruction matches with profile!\n");
+      instructions[i].operator(addr instruction, addr output);
+
+      printf_s("Instruction matches with profile! Output length is now %llu\n", output.length);
+   }
+
+   for (u64 i = 0; i < output.length; i++)
+   {
+      printf_s("0x%hhx\n", output.data[i]);
    }
 
    return 0;
